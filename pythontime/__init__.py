@@ -2,10 +2,7 @@ import logging
 import requests
 import json
 import os
-
-
 import azure.functions as func
-
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
@@ -21,6 +18,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         if response.status_code == 200:
+            logging.info('Successfully queried the time')
             time = (json.loads(response.text))['currentDateTime']
             return func.HttpResponse(time)
         else:
