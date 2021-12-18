@@ -5,6 +5,8 @@ import os
 import socket
 import azure.functions as func
 from opencensus.ext.azure.log_exporter import AzureLogHandler
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 # Setup logging mechanism
 logging.basicConfig(
@@ -29,10 +31,20 @@ def query_time():
         raise Exception(f"Failed to query time API. Status code was: {response.status_code}")
         logger.error(f"Error querying API.  Status code: {response.status_code}")
 
+# Get Key Vault secret
+def get_secret():
+
+    VAULT_NAME = os.getenv('KEY_VAULT_NAME')
+    KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
+    credential = DefaultAzureCredential()
+    secret_client = SecretClient(vaulturl=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
+    secret = secret_client.get_secret(KEY_VAULT_SECRET_NAME)
+    return secret
+    
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
     try: 
-        wordoftheday = os.getenv('WORD_OF_THE_DAY')
+        wordoftheday = get_secret()
         time = query_time()
         return func.HttpResponse(f"The current time is {time}. And the word of the day is {wordoftheday}")
 

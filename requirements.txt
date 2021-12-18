@@ -1,3 +1,5 @@
 azure-functions
 opencensus-ext-azure
 requests==2.22.0
+azure-identity
+azure-keyvault-secrets
