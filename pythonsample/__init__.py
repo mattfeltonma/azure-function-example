@@ -38,7 +38,7 @@ def get_secret():
     VAULT_NAME = os.getenv('KEY_VAULT_NAME')
     KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
     credential = DefaultAzureCredential()
-    secret_client = SecretClient(vaulturl=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
+    secret_client = SecretClient(vault_url=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
     secret = secret_client.get_secret(KEY_VAULT_SECRET_NAME)
     return secret
     
@@ -47,7 +47,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try: 
         wordoftheday = get_secret()
         time = query_time()
-        return func.HttpResponse(f"The current time is {time}. And the word of the day is {wordoftheday}")
+        return func.HttpResponse(f"The current time is {time} and the word of the day is {wordoftheday}")
 
     except Exception:
         return func.HttpResponse(
