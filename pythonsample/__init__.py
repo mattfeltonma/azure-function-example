@@ -26,6 +26,7 @@ def query_time():
 
     if response.status_code == 200:
         time = (json.loads(response.text))['currentDateTime']
+        logging.info('Successfully queried public API')
         return time
     else:
         raise Exception(f"Failed to query time API. Status code was: {response.status_code}")
