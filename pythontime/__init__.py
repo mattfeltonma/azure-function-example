@@ -37,10 +37,12 @@ def get_secret():
 
     VAULT_NAME = os.getenv('KEY_VAULT_NAME')
     KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
-    credential = DefaultAzureCredential()
+    credential = DefaultAzureCredential(
+        managed_identity_client_id = os.getenv('MSI_CLIENT_ID')
+    )
     secret_client = SecretClient(vault_url=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
     secret = secret_client.get_secret(f"{KEY_VAULT_SECRET_NAME}")
-    return secret
+    return secret.value
     
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
