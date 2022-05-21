@@ -1,4 +1,5 @@
 import logging
+from sys import exc_info
 import requests
 import json
 import os
@@ -18,8 +19,6 @@ logger.addHandler(AzureLogHandler(
 )
 
 # Get time from public API
-
-
 def query_time():
     response = requests.get(
         url="http://worldclockapi.com/api/json/utc/now"
@@ -38,24 +37,27 @@ def query_time():
 # Get Key Vault secret
 def get_secret():
 
-    try:
-        VAULT_NAME = os.getenv('KEY_VAULT_NAME')
-        KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
-    except Exception:
-        return func.HttpResponse('Environmental variables not defined')
+    VAULT_NAME = os.getenv('KEY_VAULT_NAME')
+    KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
     try:
         credential = DefaultAzureCredential(
             managed_identity_client_id=os.getenv('MSI_CLIENT_ID')
         )
     except Exception:
-        return func.HttpResponse('Failed to obtain access token')
+        raise Exception(
+            'Failed to obtain access token'
+        )
+        logger.error('Failed to obtain access token', exc_info=True)
     try:
         secret_client = SecretClient(
             vault_url=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
         secret = secret_client.get_secret(f"{KEY_VAULT_SECRET_NAME}")
         return secret.value
     except Exception:
-        return func.HttpResponse('Failed to get secret: ',exc_info=True)
+        raise Exception(
+            'Failed to get secret'
+        )
+        logger.error('Failed to get secret', exc_info=True)
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
@@ -64,8 +66,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         time = query_time()
         return func.HttpResponse(f"The current time is {time} and the word of the day is {wordoftheday}")
 
-    except Exception:
+    except Exception as e:
         return func.HttpResponse(
-            "Failed to run function",
+            str(e),
             status_code=400
         )
