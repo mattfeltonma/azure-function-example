@@ -2,7 +2,6 @@ import logging
 import requests
 import json
 import os
-import socket
 import azure.functions as func
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from azure.identity import DefaultAzureCredential
@@ -19,6 +18,8 @@ logger.addHandler(AzureLogHandler(
 )
 
 # Get time from public API
+
+
 def query_time():
     response = requests.get(
         url="http://worldclockapi.com/api/json/utc/now"
@@ -29,24 +30,36 @@ def query_time():
         logging.info('Successfully queried public API')
         return time
     else:
-        raise Exception(f"Failed to query time API. Status code was: {response.status_code}")
-        logger.error(f"Error querying API.  Status code: {response.status_code}")
+        raise Exception(
+            f"Failed to query time API. Status code was: {response.status_code}")
+        logger.error(
+            f"Error querying API.  Status code: {response.status_code}")
 
 # Get Key Vault secret
 def get_secret():
 
-    VAULT_NAME = os.getenv('KEY_VAULT_NAME')
-    KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
-    credential = DefaultAzureCredential(
-        managed_identity_client_id = os.getenv('MSI_CLIENT_ID')
-    )
-    secret_client = SecretClient(vault_url=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
-    secret = secret_client.get_secret(f"{KEY_VAULT_SECRET_NAME}")
-    return secret.value
-    
+    try:
+        VAULT_NAME = os.getenv('KEY_VAULT_NAME')
+        KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
+    except Exception:
+        return func.HttpResponse('Environmental variables not defined')
+    try:
+        credential = DefaultAzureCredential(
+            managed_identity_client_id=os.getenv('MSI_CLIENT_ID')
+        )
+    except Exception:
+        return func.HttpResponse('Failed to obtain access token')
+    try:
+        secret_client = SecretClient(
+            vault_url=f"https://{VAULT_NAME}.vault.azure.net/", credential=credential)
+        secret = secret_client.get_secret(f"{KEY_VAULT_SECRET_NAME}")
+        return secret.value
+    except Exception:
+        return func.HttpResponse('Failed to get secret: ',exc_info=True)
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
-    try: 
+    try:
         wordoftheday = get_secret()
         time = query_time()
         return func.HttpResponse(f"The current time is {time} and the word of the day is {wordoftheday}")
