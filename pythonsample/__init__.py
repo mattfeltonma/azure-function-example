@@ -40,9 +40,12 @@ def get_secret():
     VAULT_NAME = os.getenv('KEY_VAULT_NAME')
     KEY_VAULT_SECRET_NAME = os.getenv('KEY_VAULT_SECRET_NAME')
     try:
-        credential = DefaultAzureCredential(
-            managed_identity_client_id=os.getenv('MSI_CLIENT_ID')
-        )
+        if 'MSI_CLIENT_ID':
+            credential = DefaultAzureCredential(
+                managed_identity_client_id=os.getenv('MSI_CLIENT_ID')
+            )
+        else:
+            raise Exception
     except Exception:
         raise Exception(
             'Failed to obtain access token'
