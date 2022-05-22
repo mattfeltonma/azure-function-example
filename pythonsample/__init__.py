@@ -67,7 +67,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         wordoftheday = get_secret()
         time = query_time()
-        return func.HttpResponse(f"The current time is {time} and the word of the day is {wordoftheday}")
+        return func.HttpResponse(f"The current time is {time} and the secret word is {wordoftheday}")
 
     except Exception as e:
         return func.HttpResponse(
